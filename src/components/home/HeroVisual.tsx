@@ -50,28 +50,62 @@ const nodes: Node[] = [
   { at: [0.2, 2.2, 0.4], label: "CAPTURE", sub: "Point cloud", side: "l", dy: 28 },
 ];
 
-const cloud = Array.from({ length: 46 }, (_, i) => {
+/** Fewer points on mobile-capable paths — still reads as a cloud. */
+const cloud = Array.from({ length: 22 }, (_, i) => {
   const a = (i * 137.5 * Math.PI) / 180;
   const r = 0.25 + ((i * 7) % 11) / 13;
   return iso(-1.6 + Math.cos(a) * r, 4.4 + Math.sin(a) * r * 0.8, ((i * 3) % 5) * 0.08);
 });
 
-function Draw({ d, delay, duration = 1.2, className, dashed, play }: { d: string; delay: number; duration?: number; className?: string; dashed?: boolean; play: boolean }) {
+function Draw({
+  d,
+  delay,
+  duration = 1.2,
+  className,
+  dashed,
+  animate,
+}: {
+  d: string;
+  delay: number;
+  duration?: number;
+  className?: string;
+  dashed?: boolean;
+  animate: boolean;
+}) {
+  if (!animate || dashed) {
+    return <path d={d} className={className} strokeDasharray={dashed ? "4 5" : undefined} />;
+  }
   return (
     <motion.path
       d={d}
       className={className}
-      strokeDasharray={dashed ? "4 5" : undefined}
-      initial={false}
-      animate={play && !dashed ? { pathLength: [0, 1], opacity: [0.2, 1] } : { pathLength: 1, opacity: 1 }}
+      initial={{ pathLength: 0, opacity: 0.2 }}
+      animate={{ pathLength: 1, opacity: 1 }}
       transition={{ pathLength: { duration, delay, ease }, opacity: { duration: 0.4, delay } }}
     />
   );
 }
 
+function useLightMode(reduce: boolean | null) {
+  const [light, setLight] = useState(true);
+  useEffect(() => {
+    if (reduce) {
+      setLight(true);
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 1023px), (pointer: coarse), (prefers-reduced-motion: reduce)");
+    const sync = () => setLight(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [reduce]);
+  return light;
+}
+
 export function HeroVisual() {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
+  const light = useLightMode(reduce);
   const [play, setPlay] = useState(false);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -82,13 +116,13 @@ export function HeroVisual() {
   const near = { x: useTransform(sx, (v) => v * 16), y: useTransform(sy, (v) => v * 10) };
 
   useEffect(() => {
-    if (reduce) return;
+    if (light || reduce) return;
     const id = window.requestAnimationFrame(() => setPlay(true));
     return () => window.cancelAnimationFrame(id);
-  }, [reduce]);
+  }, [light, reduce]);
 
   useEffect(() => {
-    if (reduce || !window.matchMedia("(pointer: fine)").matches) return;
+    if (light || reduce || !window.matchMedia("(pointer: fine)").matches) return;
     const onMove = (e: PointerEvent) => {
       const r = ref.current?.getBoundingClientRect();
       if (!r) return;
@@ -97,10 +131,83 @@ export function HeroVisual() {
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => window.removeEventListener("pointermove", onMove);
-  }, [reduce, mx, my]);
+  }, [light, reduce, mx, my]);
+
+  const animate = play && !light;
+
+  const groundLayer = ground.map((d, i) => (
+    <Draw key={i} d={d} delay={0.1 + i * 0.025} duration={1.4} animate={animate} />
+  ));
+
+  const midLayer = (
+    <>
+      <g stroke="rgb(255 255 255 / 0.55)" strokeWidth="1">
+        {slabs.map((d, i) => (
+          <Draw key={i} d={d} delay={0.5 + i * 0.16} duration={1.1} animate={animate} />
+        ))}
+      </g>
+      <g stroke="rgb(255 255 255 / 0.22)" strokeWidth="0.8">
+        {columns.map((d, i) => (
+          <Draw key={i} d={d} delay={0.9 + i * 0.03} duration={0.9} animate={animate} />
+        ))}
+      </g>
+      {light ? (
+        <>
+          <path d={coreFace} fill="url(#hv-core)" />
+          <path d={coreFace2} fill="url(#hv-core)" opacity={0.6} />
+        </>
+      ) : (
+        <>
+          <motion.path d={coreFace} fill="url(#hv-core)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1, duration: 1 }} />
+          <motion.path d={coreFace2} fill="url(#hv-core)" initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 2.2, duration: 1 }} />
+        </>
+      )}
+      <g stroke="url(#hv-brand)" strokeWidth="1.6">
+        {corePaths.map((d, i) => (
+          <Draw key={i} d={d} delay={1.8 + i * 0.08} duration={1} animate={animate} />
+        ))}
+      </g>
+      <g stroke="var(--o7-magenta)" strokeWidth="1.1">
+        {[...designSlabs, ...designCols].map((d, i) => (
+          <Draw key={i} d={d} delay={2.3 + i * 0.1} dashed animate={animate} />
+        ))}
+      </g>
+      <g fill="var(--o7-violet-bright)">
+        {cloud.map(([x, y], i) =>
+          light ? (
+            <circle key={i} cx={x} cy={y} r={1.3} opacity={0.25 + (i % 4) * 0.15} />
+          ) : (
+            <motion.circle key={i} cx={x} cy={y} r={1.3} initial={{ opacity: 0 }} animate={{ opacity: 0.25 + (i % 4) * 0.15 }} transition={{ delay: 2 + i * 0.015 }} />
+          ),
+        )}
+      </g>
+    </>
+  );
+
+  const nearLayer = nodes.map((n, i) => {
+    const [x, y] = iso(...n.at);
+    const lx = n.side === "r" ? x + 36 : x - 36;
+    const ly = y + n.dy;
+    const d = 2.9 + i * 0.22;
+    return (
+      <g key={n.label}>
+        <Draw d={`M${x} ${y} L${lx} ${ly} L${lx + (n.side === "r" ? 26 : -26)} ${ly}`} delay={d} duration={0.6} className="stroke-magenta" animate={animate} />
+        <circle cx={x} cy={y} r={4.5} className="fill-ink stroke-magenta-bright" strokeWidth="1.5" />
+        <circle cx={x} cy={y} r={1.8} className="fill-magenta-bright" />
+        <g>
+          <text x={n.side === "r" ? lx + 20 : lx - 20} y={ly - 2} textAnchor={n.side === "r" ? "start" : "end"} className="fill-white font-mono text-[10px] font-medium tracking-[0.12em]">
+            {n.label}
+          </text>
+          <text x={n.side === "r" ? lx + 20 : lx - 20} y={ly + 12} textAnchor={n.side === "r" ? "start" : "end"} className="fill-white/50 font-mono text-[9px] tracking-[0.08em]">
+            {n.sub}
+          </text>
+        </g>
+      </g>
+    );
+  });
 
   return (
-    <div ref={ref} className="relative aspect-[640/620] w-full select-none">
+    <div ref={ref} className="relative aspect-[640/620] w-full select-none [contain:layout_paint]">
       <svg viewBox="-20 0 640 620" className="h-full w-full" role="img" aria-label="Illustrative isometric BIM model with connected information layers">
         <defs>
           <linearGradient id="hv-brand" x1="0" y1="0" x2="1" y2="1">
@@ -117,79 +224,45 @@ export function HeroVisual() {
           </radialGradient>
         </defs>
 
-        <circle cx="300" cy="330" r="290" fill="url(#hv-glow)" />
+        <circle cx="300" cy="330" r="290" fill="url(#hv-glow)" className="max-lg:opacity-60" />
 
-        <motion.g style={far} stroke="var(--o7-violet-soft)" strokeOpacity="0.28" strokeWidth="0.75" fill="none">
-          {ground.map((d, i) => (
-            <Draw key={i} d={d} delay={0.1 + i * 0.025} duration={1.4} play={play} />
-          ))}
-        </motion.g>
+        {light ? (
+          <g stroke="var(--o7-violet-soft)" strokeOpacity="0.28" strokeWidth="0.75" fill="none">
+            {groundLayer}
+          </g>
+        ) : (
+          <motion.g style={far} stroke="var(--o7-violet-soft)" strokeOpacity="0.28" strokeWidth="0.75" fill="none">
+            {groundLayer}
+          </motion.g>
+        )}
 
-        <motion.g style={mid} fill="none" strokeLinecap="round">
-          <g stroke="rgb(255 255 255 / 0.55)" strokeWidth="1">
-            {slabs.map((d, i) => (
-              <Draw key={i} d={d} delay={0.5 + i * 0.16} duration={1.1} play={play} />
-            ))}
+        {light ? (
+          <g fill="none" strokeLinecap="round">
+            {midLayer}
           </g>
-          <g stroke="rgb(255 255 255 / 0.22)" strokeWidth="0.8">
-            {columns.map((d, i) => (
-              <Draw key={i} d={d} delay={0.9 + i * 0.03} duration={0.9} play={play} />
-            ))}
-          </g>
-          <motion.path d={coreFace} fill="url(#hv-core)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1, duration: 1 }} />
-          <motion.path d={coreFace2} fill="url(#hv-core)" opacity={0.6} initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 2.2, duration: 1 }} />
-          <g stroke="url(#hv-brand)" strokeWidth="1.6">
-            {corePaths.map((d, i) => (
-              <Draw key={i} d={d} delay={1.8 + i * 0.08} duration={1} play={play} />
-            ))}
-          </g>
-          <g stroke="var(--o7-magenta)" strokeWidth="1.1">
-            {[...designSlabs, ...designCols].map((d, i) => (
-              <Draw key={i} d={d} delay={2.3 + i * 0.1} dashed play={play} />
-            ))}
-          </g>
-          <g fill="var(--o7-violet-bright)">
-            {cloud.map(([x, y], i) => (
-              <motion.circle key={i} cx={x} cy={y} r={1.3} initial={{ opacity: 0 }} animate={{ opacity: 0.25 + (i % 4) * 0.15 }} transition={{ delay: 2 + i * 0.015 }} />
-            ))}
-          </g>
-        </motion.g>
+        ) : (
+          <motion.g style={mid} fill="none" strokeLinecap="round">
+            {midLayer}
+          </motion.g>
+        )}
 
-        <motion.g style={near} fill="none">
-          {nodes.map((n, i) => {
-            const [x, y] = iso(...n.at);
-            const lx = n.side === "r" ? x + 36 : x - 36;
-            const ly = y + n.dy;
-            const d = 2.9 + i * 0.22;
-            return (
-              <g key={n.label}>
-                <Draw d={`M${x} ${y} L${lx} ${ly} L${lx + (n.side === "r" ? 26 : -26)} ${ly}`} delay={d} duration={0.6} className="stroke-magenta" play={play} />
-                <motion.circle cx={x} cy={y} r={4.5} className="fill-ink stroke-magenta-bright" strokeWidth="1.5" initial={false} animate={{ scale: 1 }} transition={{ delay: d - 0.15, type: "spring", stiffness: 260, damping: 16 }} />
-                <motion.circle cx={x} cy={y} r={1.8} className="fill-magenta-bright" initial={false} animate={{ scale: 1 }} transition={{ delay: d }} />
-                <motion.g initial={false} animate={{ opacity: 1, x: 0 }} transition={{ delay: d + 0.45, duration: 0.5 }}>
-                  <text x={n.side === "r" ? lx + 20 : lx - 20} y={ly - 2} textAnchor={n.side === "r" ? "start" : "end"} className="fill-white font-mono text-[10px] font-medium tracking-[0.12em]">
-                    {n.label}
-                  </text>
-                  <text x={n.side === "r" ? lx + 20 : lx - 20} y={ly + 12} textAnchor={n.side === "r" ? "start" : "end"} className="fill-white/50 font-mono text-[9px] tracking-[0.08em]">
-                    {n.sub}
-                  </text>
-                </motion.g>
-              </g>
-            );
-          })}
-        </motion.g>
+        {light ? <g fill="none">{nearLayer}</g> : <motion.g style={near} fill="none">{nearLayer}</motion.g>}
       </svg>
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3.8, duration: 0.6 }}
-        className="absolute bottom-[3%] left-[2%] hidden items-center gap-3 font-mono text-[0.62rem] tracking-[0.14em] text-white/45 uppercase sm:flex"
-      >
-        <span className="flex items-center gap-1.5"><span className="h-px w-4 bg-white/50" />Published</span>
-        <span className="flex items-center gap-1.5"><span className="h-px w-4 border-t border-dashed border-magenta-bright" />In design</span>
-        <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-magenta-bright" />Information node</span>
-      </motion.div>
+      <div className="absolute bottom-[3%] left-[2%] hidden items-center gap-3 font-mono text-[0.62rem] tracking-[0.14em] text-white/45 uppercase sm:flex">
+        <span className="flex items-center gap-1.5">
+          <span className="h-px w-4 bg-white/50" />
+          Published
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-px w-4 border-t border-dashed border-magenta-bright" />
+          In design
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-magenta-bright" />
+          Information node
+        </span>
+      </div>
     </div>
   );
 }

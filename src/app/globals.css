@@ -233,6 +233,15 @@ body {
   animation: o7-line 1s var(--ease-out) both;
 }
 
+@media (max-width: 1023px) {
+  .hero-rise {
+    animation-duration: 0.45s;
+  }
+  .hero-line {
+    animation-duration: 0.55s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

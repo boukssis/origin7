@@ -20,9 +20,10 @@ export default function Home() {
     <>
       {/* 01 — Hero */}
       <section className="relative overflow-x-clip bg-ink pt-[var(--header-h)] text-white">
-        <div className="blueprint-dark absolute inset-0 [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" aria-hidden />
-        <div className="absolute -top-32 left-1/2 size-[720px] -translate-x-1/4 rounded-full bg-violet/25 blur-[160px]" aria-hidden />
-        <div className="absolute right-0 bottom-0 size-[480px] rounded-full bg-magenta/15 blur-[140px]" aria-hidden />
+        <div className="blueprint-dark absolute inset-0 [mask-image:linear-gradient(to_bottom,black_60%,transparent)] max-md:opacity-40" aria-hidden />
+        <div className="absolute -top-32 left-1/2 hidden size-[720px] -translate-x-1/4 rounded-full bg-violet/25 blur-[160px] md:block" aria-hidden />
+        <div className="absolute right-0 bottom-0 hidden size-[480px] rounded-full bg-magenta/15 blur-[140px] md:block" aria-hidden />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,rgb(102_42_132/0.35),transparent_70%)] md:hidden" aria-hidden />
         <div className="shell relative grid min-h-[calc(100svh-var(--header-h))] items-center gap-8 pt-8 pb-16 lg:grid-cols-12 lg:gap-6 lg:pt-4 lg:pb-12">
           <div className="relative z-10 lg:col-span-6 xl:col-span-6">
             <HeroIntro />
@@ -129,8 +130,8 @@ export default function Home() {
 
       {/* 05 — Showcase */}
       <section className="section relative overflow-hidden bg-ink text-white" aria-labelledby="showcase-h">
-        <div className="blueprint-dark absolute inset-0" aria-hidden />
-        <div className="absolute -top-40 left-1/3 size-[640px] rounded-full bg-violet/30 blur-[140px]" aria-hidden />
+        <div className="blueprint-dark absolute inset-0 max-md:opacity-40" aria-hidden />
+        <div className="absolute -top-40 left-1/3 hidden size-[640px] rounded-full bg-violet/30 blur-[140px] md:block" aria-hidden />
         <div className="shell relative">
           <SectionIndex n="03" label="Digital construction" dark />
           <div className="mt-14 grid gap-8 lg:grid-cols-12">
