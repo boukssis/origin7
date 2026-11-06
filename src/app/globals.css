@@ -1,26 +1,245 @@
 @import "tailwindcss";
 
+/* Brand palette sampled from the supplied Origin7 logo artwork. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --o7-magenta: #b81868;
+  --o7-magenta-deep: #8e104e;
+  --o7-magenta-bright: #d42a7a;
+  --o7-violet: #662a84;
+  --o7-violet-bright: #7d3ba8;
+  --o7-violet-soft: #b48ad4;
+  --o7-ink: #151322;
+  --o7-ink-2: #202038;
+  --o7-ink-3: #2c2a45;
+  --o7-paper: #f9f8fc;
+  --o7-white: #ffffff;
+  --o7-tint-violet: #f0ecff;
+  --o7-tint-magenta: #fbeaf3;
+  --o7-line: #e3dfec;
+  --o7-line-dark: rgb(255 255 255 / 0.12);
+  --o7-muted: #5d5a6e;
+  --o7-muted-dark: #a9a6bb;
+
+  --o7-gradient: linear-gradient(100deg, var(--o7-violet) 0%, var(--o7-magenta) 100%);
+
+  --header-h: 84px;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --section-y: clamp(5rem, 10vw, 9rem);
+  --max-w: 1440px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --fs-display: clamp(3rem, 1.2rem + 7.4vw, 8.5rem);
+  --fs-h1: clamp(2.5rem, 1.4rem + 4.6vw, 5.75rem);
+  --fs-h2: clamp(2rem, 1.2rem + 3vw, 4rem);
+  --fs-h3: clamp(1.35rem, 1.1rem + 0.9vw, 1.9rem);
+  --fs-lead: clamp(1.075rem, 1rem + 0.35vw, 1.3rem);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-magenta: var(--o7-magenta);
+  --color-magenta-deep: var(--o7-magenta-deep);
+  --color-magenta-bright: var(--o7-magenta-bright);
+  --color-violet: var(--o7-violet);
+  --color-violet-bright: var(--o7-violet-bright);
+  --color-violet-soft: var(--o7-violet-soft);
+  --color-ink: var(--o7-ink);
+  --color-ink-2: var(--o7-ink-2);
+  --color-ink-3: var(--o7-ink-3);
+  --color-paper: var(--o7-paper);
+  --color-tint-violet: var(--o7-tint-violet);
+  --color-tint-magenta: var(--o7-tint-magenta);
+  --color-line: var(--o7-line);
+  --color-muted: var(--o7-muted);
+  --color-muted-dark: var(--o7-muted-dark);
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-padding-top: calc(var(--header-h) + 24px);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--o7-paper);
+  color: var(--o7-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--o7-magenta);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--o7-magenta);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: var(--section-y);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.lead {
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.text-gradient {
+  background: var(--o7-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.blueprint {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--o7-violet) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--o7-violet) 10%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.blueprint-dark {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.prose-o7 p {
+  margin-block: 0 1.15em;
+  line-height: 1.75;
+  color: var(--o7-muted);
+}
+.prose-o7 h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 2.4em 0 0.7em;
+  color: var(--o7-ink);
+}
+.prose-o7 ul {
+  margin: 0 0 1.4em;
+  padding: 0;
+  list-style: none;
+}
+.prose-o7 li {
+  position: relative;
+  padding-left: 1.6em;
+  margin-bottom: 0.6em;
+  line-height: 1.7;
+  color: var(--o7-muted);
+}
+.prose-o7 li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 0.8em;
+  height: 1px;
+  background: var(--o7-magenta);
+}
+.prose-o7 strong {
+  color: var(--o7-ink);
+  font-weight: 600;
+}
+
+@keyframes o7-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes o7-line {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.hero-rise {
+  animation: o7-rise 0.8s var(--ease-out) both;
+}
+
+.hero-line {
+  animation: o7-line 1s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

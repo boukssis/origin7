@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Origin7 — concept website
 
-## Getting Started
+Premium multi-page website concept for **Origin7 Ltd**, a BIM and digital construction consultancy serving Northern Ireland and Ireland.
 
-First, run the development server:
+This is a private presentation concept. It is **not** an official Origin7 publication until the company authorises it.
+
+## Stack
+
+- Next.js 16 App Router
+- TypeScript
+- Tailwind CSS 4
+- Motion
+- Zod (contact form)
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuration before launch
 
-## Learn More
+Copy `.env.example` and set:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL for metadata and sitemap |
+| `SITE_LAUNCHED=true` | Removes `noindex` and allows search engines |
+| `PREVIEW_PASSWORD` | Optional Basic-auth gate for a private preview |
+| `CONTACT_DELIVERY_ENABLED=true` | Turns on real enquiry delivery |
+| `CONTACT_TO_EMAIL` / `CONTACT_FROM_EMAIL` / `RESEND_API_KEY` | Authorised email destination |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Until `CONTACT_DELIVERY_ENABLED` is set, the contact form validates details and offers a `mailto:` fallback. It does **not** store or transmit personal data to a third party.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Brand assets
 
-## Deploy on Vercel
+- Logo: supplied Origin7 wordmark (`public/brand/`)
+- Founder portrait: supplied photograph of Melanie Dawson (`public/images/melanie-dawson.webp`)
+- Palette sampled from the logo artwork (magenta `#B81868`, violet `#662A84`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Regenerate processed assets:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+node scripts/prepare-assets.mjs path/to/logo.png path/to/portrait.jpg
+```
